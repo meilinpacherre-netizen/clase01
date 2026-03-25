@@ -1,33 +1,34 @@
-# 1. IMPORTAR LIBRERÍAS (Traer herramientas externas)
-import math # Usaremos esta librería para redondear números
+from fastapi import FastAPI
+from pydantic import BaseModel
+from fastapi.responses import FileResponse
+app = FastAPI()
+@app.get("/")
+def saludar():
+    return {"mensaje": "¡Hola! Bienvenido a mi API"}
+@app.get("/bienvenido/{nombre}")
+def saludar_persona(nombre: str):
+    return {"mensaje": f"Hola {nombre}, ¡qué bueno verte por aquí!"}
+@app.get("/favicon.ico")
+def favicon():
+    return FileResponse("path/a/favicon.ico")
 
-# 2. LA CLASE (El molde o diseño de nuestra herramienta)
-class CalculadoraPropinas:
-    def __init__(self, servicio):
-        self.calidad_servicio = servicio # Guardamos qué tan bien nos atendieron
+servicios_db = [
+    {"nombre": "consulta", "precio": 50},
+    {"nombre": "baño", "precio": 60},
+    {"nombre": "corte", "precio": 100}
+]
+@app.get("/servicios")
+def listar_servicios():
+    return {
+        "servicios": servicios_db
+    }
 
-    # 3. LA FUNCIÓN (La acción específica de calcular)
-    def calcular(self, monto_cuenta):
-        # Usamos una lógica simple de "Si/Sino"
-        if self.calidad_servicio == "excelente":
-            porcentaje = 0.20 # 20%
-        else:
-            porcentaje = 0.10 # 10%
-        
-        propina = monto_cuenta * porcentaje
-        return math.ceil(propina) # Redondeamos hacia arriba con la librería math
-# --- 4. EL FLUJO PRINCIPAL (Donde ocurre la magia) ---
+class ServicioIn(BaseModel):
+    nombre: str
+    precio: float
 
-# Declaración de variables mediante interacción (Input)
-total = float(input("¿Cuánto fue el total de la cuenta? "))
-atencion = input("¿Cómo fue el servicio? (excelente/normal): ")
-
-# Creamos el objeto basado en la Clase
-mi_maquina = CalculadoraPropinas(atencion)
-
-# Llamamos a la función y guardamos el resultado
-resultado_final = mi_maquina.calcular(total)
-
-# 5. SALIDA (El programa nos habla)
-print(f"Deberías dejar una propina de: ${resultado_final}")
-
+@app.post("/agregar-servicio")
+def agregar_servicio(servicio: ServicioIn):
+    nuevo = servicio.dict()
+    servicios_db.append(nuevo)
+    return {"ok": True, "servicio": nuevo}
